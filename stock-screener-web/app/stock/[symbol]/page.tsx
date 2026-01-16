@@ -140,7 +140,7 @@ export default function StockPage({ params }: StockPageProps) {
           <TradingViewChart
             symbol={stock.symbol}
             exchange={stock.exchange || "NASDAQ"}
-            height={750}
+            height={2000}
             showIndicators={true}
           />
         </div>
