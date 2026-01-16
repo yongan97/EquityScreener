@@ -89,6 +89,13 @@ export interface Stock {
   // Earnings
   next_earnings_date: string | null;
 
+  // Price Performance
+  perf_1d: number | null;
+  perf_1w: number | null;
+  perf_1m: number | null;
+  perf_ytd: number | null;
+  perf_52w: number | null;
+
   // Trade Idea (markdown)
   trade_idea: string | null;
 

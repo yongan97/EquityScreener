@@ -1,8 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import type { Stock } from "@/types/stock";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
 
 interface TradeIdeaModalProps {
   stock: Stock;
@@ -13,51 +23,48 @@ interface TradeIdeaModalProps {
 export function TradeIdeaModal({ stock, isOpen, onClose }: TradeIdeaModalProps) {
   const [copied, setCopied] = useState(false);
 
-  if (!isOpen) return null;
-
   const handleCopy = async () => {
     if (stock.trade_idea) {
       await navigator.clipboard.writeText(stock.trade_idea);
       setCopied(true);
+      toast.success("Trade idea copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={handleBackdropClick}
-    >
-      <div className="relative max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-lg bg-background shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <h2 className="text-xl font-semibold">
-            Trade Idea: {stock.symbol}
-          </h2>
-          <div className="flex gap-2">
-            <button
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <div className="flex items-center justify-between pr-8">
+            <div>
+              <DialogTitle>Trade Idea: {stock.symbol}</DialogTitle>
+              <DialogDescription>
+                AI-generated analysis and trade setup for {stock.name}
+              </DialogDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleCopy}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              disabled={!stock.trade_idea}
             >
-              {copied ? "Copied!" : "Copy to Clipboard"}
-            </button>
-            <button
-              onClick={onClose}
-              className="rounded-md border px-3 py-2 text-sm hover:bg-muted"
-            >
-              Close
-            </button>
+              {copied ? (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy
+                </>
+              )}
+            </Button>
           </div>
-        </div>
+        </DialogHeader>
 
-        {/* Content */}
-        <div className="max-h-[calc(90vh-80px)] overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto pr-2">
           {stock.trade_idea ? (
             <div className="prose prose-sm dark:prose-invert max-w-none">
               <ReactMarkdown>{stock.trade_idea}</ReactMarkdown>
@@ -68,7 +75,7 @@ export function TradeIdeaModal({ stock, isOpen, onClose }: TradeIdeaModalProps) 
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

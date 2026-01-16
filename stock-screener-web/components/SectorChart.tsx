@@ -7,24 +7,25 @@ import {
   Cell,
   ResponsiveContainer,
   Tooltip,
-  Legend,
 } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PieChart as PieChartIcon } from "lucide-react";
 
 interface SectorChartProps {
   sectorStats: SectorStats[];
 }
 
 const COLORS = [
-  "#3b82f6", // blue
-  "#10b981", // emerald
-  "#f59e0b", // amber
-  "#ef4444", // red
-  "#8b5cf6", // violet
-  "#ec4899", // pink
-  "#06b6d4", // cyan
-  "#f97316", // orange
-  "#84cc16", // lime
-  "#6366f1", // indigo
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "#8b5cf6",
+  "#ec4899",
+  "#06b6d4",
+  "#f97316",
+  "#84cc16",
 ];
 
 export function SectorChart({ sectorStats }: SectorChartProps) {
@@ -39,49 +40,84 @@ export function SectorChart({ sectorStats }: SectorChartProps) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-lg border bg-card p-4">
-        <h3 className="font-semibold mb-4">Distribution by Sector</h3>
-        <div className="h-64 flex items-center justify-center text-muted-foreground">
-          No data available
-        </div>
-      </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-base">Distribution by Sector</CardTitle>
+          <PieChartIcon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="h-52 flex items-center justify-center text-muted-foreground">
+            No data available
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <h3 className="font-semibold mb-4">Distribution by Sector</h3>
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="count"
-              nameKey="sector"
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              label={({ sector, percent }) =>
-                `${sector} (${(percent * 100).toFixed(0)}%)`
-              }
-              labelLine={false}
-            >
-              {data.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value: number, name: string) => [
-                `${value} stocks`,
-                name,
-              ]}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-base">Distribution by Sector</CardTitle>
+        <PieChartIcon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="h-52">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                dataKey="count"
+                nameKey="sector"
+                cx="50%"
+                cy="50%"
+                outerRadius={70}
+                label={({ sector, percent }) =>
+                  percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ""
+                }
+                labelLine={false}
+              >
+                {data.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    className="stroke-background"
+                    strokeWidth={2}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="rounded-lg border bg-background p-2 shadow-md">
+                        <p className="font-medium">{payload[0].name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {payload[0].value} stocks
+                        </p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        {/* Legend */}
+        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+          {data.slice(0, 5).map((entry, index) => (
+            <div key={entry.sector} className="flex items-center gap-1">
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+              />
+              <span className="text-muted-foreground truncate max-w-[80px]">
+                {entry.sector}
+              </span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

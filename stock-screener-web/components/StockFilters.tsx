@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import type { StockFilters } from "@/types/stock";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Search, X } from "lucide-react";
 
 interface StockFiltersProps {
   sectors: string[];
@@ -18,19 +23,16 @@ export function StockFiltersComponent({
     onFiltersChange({ ...filters, search: e.target.value });
   };
 
-  const handleSectorChange = (sector: string, checked: boolean) => {
-    const newSectors = checked
-      ? [...filters.sectors, sector]
-      : filters.sectors.filter((s) => s !== sector);
+  const handleSectorToggle = (sector: string) => {
+    const isSelected = filters.sectors.includes(sector);
+    const newSectors = isSelected
+      ? filters.sectors.filter((s) => s !== sector)
+      : [...filters.sectors, sector];
     onFiltersChange({ ...filters, sectors: newSectors });
   };
 
-  const handleScoreMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFiltersChange({ ...filters, scoreMin: Number(e.target.value) });
-  };
-
-  const handleScoreMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFiltersChange({ ...filters, scoreMax: Number(e.target.value) });
+  const handleScoreRangeChange = (values: number[]) => {
+    onFiltersChange({ ...filters, scoreMin: values[0], scoreMax: values[1] });
   };
 
   const handleClearFilters = () => {
@@ -49,81 +51,72 @@ export function StockFiltersComponent({
     filters.scoreMax < 10;
 
   return (
-    <div className="space-y-4 rounded-lg border bg-card p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Filters</h3>
-        {hasActiveFilters && (
-          <button
-            onClick={handleClearFilters}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Clear all
-          </button>
-        )}
-      </div>
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">Filters</CardTitle>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+              <X className="mr-1 h-3 w-3" />
+              Clear all
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Search */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Search</label>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Symbol or name..."
+              value={filters.search}
+              onChange={handleSearchChange}
+              className="pl-8"
+            />
+          </div>
+        </div>
 
-      {/* Search */}
-      <div>
-        <label className="text-sm font-medium">Search</label>
-        <input
-          type="text"
-          placeholder="Symbol or name..."
-          value={filters.search}
-          onChange={handleSearchChange}
-          className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
-        />
-      </div>
-
-      {/* Score Range */}
-      <div>
-        <label className="text-sm font-medium">Score Range</label>
-        <div className="mt-1 flex items-center gap-2">
-          <input
-            type="number"
+        {/* Score Range */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Score Range</label>
+            <span className="text-sm text-muted-foreground">
+              {filters.scoreMin} - {filters.scoreMax}
+            </span>
+          </div>
+          <Slider
+            value={[filters.scoreMin, filters.scoreMax]}
+            onValueChange={handleScoreRangeChange}
             min={0}
             max={10}
             step={0.5}
-            value={filters.scoreMin}
-            onChange={handleScoreMinChange}
-            className="w-20 rounded-md border bg-background px-2 py-1 text-sm"
-          />
-          <span className="text-muted-foreground">to</span>
-          <input
-            type="number"
-            min={0}
-            max={10}
-            step={0.5}
-            value={filters.scoreMax}
-            onChange={handleScoreMaxChange}
-            className="w-20 rounded-md border bg-background px-2 py-1 text-sm"
+            className="py-2"
           />
         </div>
-      </div>
 
-      {/* Sectors */}
-      <div>
-        <label className="text-sm font-medium">Sectors</label>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {sectors.map((sector) => (
-            <label
-              key={sector}
-              className={`cursor-pointer rounded-full border px-3 py-1 text-xs transition-colors ${
-                filters.sectors.includes(sector)
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "hover:border-primary/50"
-              }`}
-            >
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={filters.sectors.includes(sector)}
-                onChange={(e) => handleSectorChange(sector, e.target.checked)}
-              />
-              {sector}
-            </label>
-          ))}
+        {/* Sectors */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Sectors</label>
+          <div className="flex flex-wrap gap-1.5">
+            {sectors.map((sector) => {
+              const isSelected = filters.sectors.includes(sector);
+              return (
+                <Badge
+                  key={sector}
+                  variant={isSelected ? "default" : "outline"}
+                  className="cursor-pointer transition-colors hover:bg-primary/80"
+                  onClick={() => handleSectorToggle(sector)}
+                >
+                  {sector}
+                </Badge>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

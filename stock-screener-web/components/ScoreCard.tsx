@@ -2,10 +2,30 @@
 
 import type { Stock } from "@/types/stock";
 import { cn, getScoreColor } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface ScoreCardProps {
   stock: Stock;
 }
+
+const scoreDescriptions: Record<string, string> = {
+  "Fundamental": "Overall company fundamentals including balance sheet health",
+  "Valuation": "How fairly priced the stock is relative to earnings and growth",
+  "Growth": "Revenue and earnings growth trajectory",
+  "Momentum": "Price and volume trends indicating market sentiment",
+  "Sentiment": "News and analyst sentiment analysis",
+  "Quality": "Business quality metrics like ROE, margins, and consistency",
+  "Profitability": "Operating margins, net margins, and return metrics",
+  "Financial Health": "Debt levels, cash position, and liquidity",
+};
 
 export function ScoreCard({ stock }: ScoreCardProps) {
   // Use AI score if available, otherwise fallback to basic score
@@ -32,108 +52,137 @@ export function ScoreCard({ stock }: ScoreCardProps) {
 
   // Get recommendation based on AI score
   const getRecommendation = (score: number | null) => {
-    if (!score) return { text: "-", color: "text-muted-foreground" };
-    if (score >= 7.5) return { text: "STRONG BUY", color: "text-green-500" };
-    if (score >= 6.5) return { text: "BUY", color: "text-emerald-500" };
-    if (score >= 5.5) return { text: "HOLD", color: "text-yellow-500" };
-    return { text: "WATCH", color: "text-orange-500" };
+    if (!score) return { text: "-", variant: "outline" as const, icon: Minus };
+    if (score >= 7.5) return { text: "STRONG BUY", variant: "default" as const, icon: TrendingUp };
+    if (score >= 6.5) return { text: "BUY", variant: "secondary" as const, icon: TrendingUp };
+    if (score >= 5.5) return { text: "HOLD", variant: "outline" as const, icon: Minus };
+    return { text: "WATCH", variant: "destructive" as const, icon: TrendingDown };
   };
 
   const recommendation = getRecommendation(mainScore);
 
+  const getFlagVariant = (flag: string): "default" | "secondary" | "destructive" | "outline" => {
+    if (flag.includes("Undervalued") || flag.includes("Growth") || flag.includes("Strong")) {
+      return "default";
+    }
+    if (flag.includes("Risk") || flag.includes("Warning") || flag.includes("Debt")) {
+      return "destructive";
+    }
+    return "secondary";
+  };
+
   return (
-    <div className="rounded-lg border bg-card p-6">
-      <div className="mb-4 text-center">
-        <div className="text-sm text-muted-foreground">
-          {hasAIScore ? "AI Score" : "Overall Score"}
-        </div>
-        <div
-          className={cn("text-5xl font-bold", getScoreColor(mainScore))}
-        >
-          {mainScore?.toFixed(1) || "-"}
-        </div>
-        <div className="text-sm text-muted-foreground">out of 10</div>
-        {hasAIScore && (
-          <div className={cn("mt-2 text-lg font-semibold", recommendation.color)}>
-            {recommendation.text}
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-3">
-        {scores.map((score) => (
-          <div key={score.label}>
-            <div className="flex justify-between text-sm">
-              <span>{score.label}</span>
-              <span className={cn("font-medium", getScoreColor(score.value))}>
-                {score.value?.toFixed(1) || "-"}
-              </span>
+    <TooltipProvider>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-center text-sm font-medium text-muted-foreground">
+            {hasAIScore ? "AI Score" : "Overall Score"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 text-center">
+            <div className={cn("text-5xl font-bold", getScoreColor(mainScore))}>
+              {mainScore?.toFixed(1) || "-"}
             </div>
-            <div className="mt-1 h-2 rounded-full bg-muted">
-              <div
+            <div className="text-sm text-muted-foreground">out of 10</div>
+            {hasAIScore && (
+              <Badge
+                variant={recommendation.variant}
                 className={cn(
-                  "h-full rounded-full transition-all",
-                  score.value !== null && score.value >= 8
-                    ? "bg-green-500"
-                    : score.value !== null && score.value >= 6
-                    ? "bg-emerald-500"
-                    : score.value !== null && score.value >= 4
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
+                  "mt-3",
+                  recommendation.text === "STRONG BUY" && "bg-green-500 hover:bg-green-600",
+                  recommendation.text === "BUY" && "bg-emerald-500 hover:bg-emerald-600"
                 )}
-                style={{
-                  width: `${((score.value || 0) / score.max) * 100}%`,
-                }}
-              />
-            </div>
+              >
+                <recommendation.icon className="mr-1 h-3 w-3" />
+                {recommendation.text}
+              </Badge>
+            )}
           </div>
-        ))}
-      </div>
 
-      {/* Analysis insights */}
-      {hasAIScore && (
-        <div className="mt-6 space-y-2 border-t pt-4">
-          {stock.momentum_trend && (
-            <div className="text-sm">
-              <span className="text-muted-foreground">Momentum: </span>
-              <span className="font-medium">{stock.momentum_trend}</span>
-            </div>
-          )}
-          {stock.growth_outlook && (
-            <div className="text-sm">
-              <span className="text-muted-foreground">Growth: </span>
-              <span className="font-medium">{stock.growth_outlook}</span>
-            </div>
-          )}
-          {stock.valuation_vs_sector && (
-            <div className="text-sm">
-              <span className="text-muted-foreground">Valuation: </span>
-              <span className="font-medium">{stock.valuation_vs_sector}</span>
-            </div>
-          )}
-        </div>
-      )}
+          <div className="space-y-3">
+            {scores.map((score) => (
+              <div key={score.label}>
+                <div className="flex justify-between text-sm">
+                  <div className="flex items-center gap-1">
+                    <span>{score.label}</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">{scoreDescriptions[score.label]}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <span className={cn("font-medium", getScoreColor(score.value))}>
+                    {score.value?.toFixed(1) || "-"}
+                  </span>
+                </div>
+                <div className="mt-1 h-2 rounded-full bg-muted">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all",
+                      score.value !== null && score.value >= 8
+                        ? "bg-green-500"
+                        : score.value !== null && score.value >= 6
+                        ? "bg-emerald-500"
+                        : score.value !== null && score.value >= 4
+                        ? "bg-yellow-500"
+                        : "bg-red-500"
+                    )}
+                    style={{
+                      width: `${((score.value || 0) / score.max) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
 
-      {/* Flags */}
-      {stock.flags && stock.flags.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-1">
-          {stock.flags.map((flag, i) => (
-            <span
-              key={i}
-              className={cn(
-                "rounded-full px-2 py-0.5 text-xs",
-                flag.includes("Undervalued") || flag.includes("Growth") || flag.includes("Strong")
-                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                  : flag.includes("Risk") || flag.includes("Warning") || flag.includes("Debt")
-                  ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                  : "bg-muted text-muted-foreground"
+          {/* Analysis insights */}
+          {hasAIScore && (stock.momentum_trend || stock.growth_outlook || stock.valuation_vs_sector) && (
+            <div className="mt-6 space-y-2 border-t pt-4">
+              {stock.momentum_trend && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Momentum: </span>
+                  <span className="font-medium">{stock.momentum_trend}</span>
+                </div>
               )}
-            >
-              {flag}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
+              {stock.growth_outlook && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Growth: </span>
+                  <span className="font-medium">{stock.growth_outlook}</span>
+                </div>
+              )}
+              {stock.valuation_vs_sector && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Valuation: </span>
+                  <span className="font-medium">{stock.valuation_vs_sector}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Flags */}
+          {stock.flags && stock.flags.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1">
+              {stock.flags.map((flag, i) => (
+                <Badge
+                  key={i}
+                  variant={getFlagVariant(flag)}
+                  className={cn(
+                    "text-xs",
+                    getFlagVariant(flag) === "default" && "bg-green-500 hover:bg-green-600"
+                  )}
+                >
+                  {flag}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }

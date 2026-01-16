@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getLatestRun,
@@ -13,6 +13,9 @@ import { SummaryCards } from "@/components/SummaryCards";
 import { StockTable } from "@/components/StockTable";
 import { StockFiltersComponent } from "@/components/StockFilters";
 import { SectorChart } from "@/components/SectorChart";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const [filters, setFilters] = useState<StockFilters>({
@@ -115,12 +118,18 @@ export default function Dashboard() {
     a.download = `stock-screener-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success(`Exported ${filteredStocks.length} stocks to CSV`);
   };
 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <SummaryCards run={run} stocks={filteredStocks} sectorStats={sectorStats} />
+      <SummaryCards
+        run={run}
+        stocks={filteredStocks}
+        sectorStats={sectorStats}
+        isLoading={isLoading}
+      />
 
       {/* Main Content */}
       <div className="grid gap-6 lg:grid-cols-4">
@@ -137,16 +146,18 @@ export default function Dashboard() {
         {/* Stock Table */}
         <div className="lg:col-span-3 space-y-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Showing {filteredStocks.length} of {stocks.length} stocks
-            </div>
-            <button
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleExport}
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
               disabled={filteredStocks.length === 0}
             >
+              <Download className="mr-2 h-4 w-4" />
               Export CSV
-            </button>
+            </Button>
           </div>
           <StockTable stocks={filteredStocks} isLoading={isLoading} />
         </div>
