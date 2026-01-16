@@ -54,11 +54,12 @@ function TradingViewChartComponent({
     : [];
 
   return (
-    <div className="overflow-hidden rounded-lg">
+    <div style={{ height: `${height}px`, minHeight: `${height}px` }}>
       <AdvancedRealTimeChart
         symbol={tvSymbol}
         theme="dark"
-        autosize
+        autosize={false}
+        width="100%"
         height={height}
         interval="D"
         timezone="America/New_York"
