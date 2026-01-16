@@ -6,6 +6,8 @@ import Link from "next/link";
 import { getStockBySymbol, getStockHistory } from "@/lib/queries";
 import { ScoreCard } from "@/components/ScoreCard";
 import { TradeIdeaModal } from "@/components/TradeIdeaModal";
+import { TradingViewChart } from "@/components/charts/TradingViewChart";
+import { TechnicalAnalysisWidget } from "@/components/charts/TechnicalAnalysisWidget";
 import {
   formatCurrency,
   formatNumber,
@@ -129,6 +131,30 @@ export default function StockPage({ params }: StockPageProps) {
         isOpen={showTradeIdea}
         onClose={() => setShowTradeIdea(false)}
       />
+
+      {/* TradingView Chart Section */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Price Chart */}
+        <div className="lg:col-span-2 rounded-lg border bg-card p-4">
+          <h3 className="font-semibold mb-4">Price Chart</h3>
+          <TradingViewChart
+            symbol={stock.symbol}
+            exchange={stock.exchange || "NASDAQ"}
+            height={500}
+            showIndicators={true}
+          />
+        </div>
+
+        {/* Technical Analysis */}
+        <div className="lg:col-span-1 rounded-lg border bg-card p-4">
+          <h3 className="font-semibold mb-4">Technical Analysis</h3>
+          <TechnicalAnalysisWidget
+            symbol={stock.symbol}
+            exchange={stock.exchange || "NASDAQ"}
+            height={450}
+          />
+        </div>
+      </div>
 
       {/* Main Grid */}
       <div className="grid gap-6 md:grid-cols-3">

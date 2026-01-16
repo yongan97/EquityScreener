@@ -1,0 +1,55 @@
+"use client";
+
+import { memo } from "react";
+import { AdvancedRealTimeChart, Studies } from "react-ts-tradingview-widgets";
+
+interface TradingViewChartProps {
+  symbol: string;
+  exchange?: string;
+  height?: number;
+  showIndicators?: boolean;
+}
+
+function TradingViewChartComponent({
+  symbol,
+  exchange = "NASDAQ",
+  height = 500,
+  showIndicators = true,
+}: TradingViewChartProps) {
+  // Format symbol for TradingView (EXCHANGE:SYMBOL)
+  const tvSymbol = `${exchange}:${symbol}`;
+
+  // Default studies for technical analysis
+  const defaultStudies: Studies[] = showIndicators
+    ? [
+        "MASimple@tv-basicstudies" as Studies, // SMA
+        "MAExp@tv-basicstudies" as Studies, // EMA
+        "Volume@tv-basicstudies" as Studies, // Volume
+      ]
+    : [];
+
+  return (
+    <div className="overflow-hidden rounded-lg">
+      <AdvancedRealTimeChart
+        symbol={tvSymbol}
+        theme="dark"
+        autosize
+        height={height}
+        interval="D"
+        timezone="America/New_York"
+        style="1"
+        locale="en"
+        toolbar_bg="#1e1e1e"
+        enable_publishing={false}
+        hide_top_toolbar={false}
+        hide_legend={false}
+        save_image={true}
+        studies={defaultStudies}
+        container_id={`tradingview-chart-${symbol}`}
+      />
+    </div>
+  );
+}
+
+// Memoize to prevent unnecessary re-renders
+export const TradingViewChart = memo(TradingViewChartComponent);
