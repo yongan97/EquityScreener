@@ -63,6 +63,93 @@ jobs:
               "html": "<h2>El Stock Screener falló</h2><p><strong>Fecha:</strong> '"$(date)"'</p><p><strong>Run ID:</strong> ${{ github.run_id }}</p><p><strong>Ver logs:</strong> <a href=\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\">Click aquí</a></p>"
             }'
 
+  # Job para distribución de contenido (Bluesky, Discord, Newsletter)
+  distribute-content:
+    runs-on: ubuntu-latest
+    needs: run-screener
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: stock-screener/requirements.txt
+
+      - name: Install dependencies
+        working-directory: stock-screener
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Post to Bluesky
+        working-directory: stock-screener
+        continue-on-error: true
+        env:
+          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          if [ -n "$BLUESKY_HANDLE" ] && [ -n "$BLUESKY_APP_PASSWORD" ]; then
+            python scripts/post_bluesky.py
+          else
+            echo "Bluesky credentials not configured, skipping..."
+          fi
+
+      - name: Post to Discord
+        working-directory: stock-screener
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+            python scripts/post_discord.py
+          else
+            echo "Discord webhook not configured, skipping..."
+          fi
+
+      - name: Generate RSS Feed
+        working-directory: stock-screener
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          RSS_OUTPUT_DIR: ../stock-screener-web/public
+        run: python scripts/generate_rss.py
+
+      - name: Send Newsletter (Premium Only)
+        working-directory: stock-screener
+        continue-on-error: true
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          FROM_EMAIL: ${{ vars.FROM_EMAIL }}
+        run: |
+          if [ -n "$RESEND_API_KEY" ]; then
+            python scripts/send_newsletter.py
+          else
+            echo "Resend API key not configured, skipping newsletter..."
+          fi
+
+      - name: Upload RSS Feed artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rss-feed
+          path: stock-screener-web/public/feed.xml
+          if-no-files-found: ignore
+
   # Job opcional para limpieza manual
   cleanup:
     runs-on: ubuntu-latest
