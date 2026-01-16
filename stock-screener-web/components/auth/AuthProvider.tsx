@@ -13,8 +13,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Admin emails get premium access automatically
+  const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",") || [];
+  const isAdmin = user?.email && adminEmails.includes(user.email);
+
   const isPremium =
-    subscription?.status === "active" && subscription?.tier === "premium";
+    isAdmin || (subscription?.status === "active" && subscription?.tier === "premium");
 
   // Fetch user profile
   const fetchProfile = async (userId: string) => {
