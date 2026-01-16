@@ -45,7 +45,7 @@ jobs:
           FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: python scripts/run_full_analysis.py run --cleanup --verbose
+        run: python scripts/run_full_analysis.py --cleanup --verbose
 
       - name: Notify on failure
         if: failure()

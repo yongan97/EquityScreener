@@ -114,11 +114,11 @@ def run(
 
         console.print(f"  [green]OK[/green] Guardado con Run ID: {run_id}")
 
-        # 4. Cleanup opcional
+        # 4. Cleanup - mantener solo 1 corrida por dia
         if cleanup:
-            console.print(f"\n[cyan]Paso 4/4:[/cyan] Limpiando corridas antiguas...")
-            deleted = db.delete_old_runs(keep_count=30)
-            console.print(f"  [green]OK[/green] {deleted} corridas eliminadas")
+            console.print(f"\n[cyan]Paso 4/4:[/cyan] Limpiando corridas duplicadas...")
+            deleted = db.cleanup_keep_one_per_day(keep_days=30)
+            console.print(f"  [green]OK[/green] {deleted} corridas duplicadas eliminadas")
 
         # Resumen final
         console.print()

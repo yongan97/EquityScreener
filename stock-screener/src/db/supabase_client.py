@@ -248,6 +248,68 @@ class SupabaseClient:
         logger.info(f"Deleted {deleted_count} old screener runs")
         return deleted_count
 
+    def cleanup_keep_one_per_day(self, keep_days: int = 30) -> int:
+        """Delete duplicate runs keeping only the latest run per day.
+
+        Args:
+            keep_days: Number of days of history to keep.
+
+        Returns:
+            Number of runs deleted.
+        """
+        from datetime import datetime, timedelta
+        from collections import defaultdict
+
+        # Get all runs
+        response = (
+            self.client.table("screener_runs")
+            .select("id, created_at")
+            .order("created_at", desc=True)
+            .execute()
+        )
+
+        if not response.data:
+            return 0
+
+        # Group runs by date
+        runs_by_date = defaultdict(list)
+        for run in response.data:
+            # Parse date (assuming ISO format)
+            created = run["created_at"][:10]  # YYYY-MM-DD
+            runs_by_date[created].append(run["id"])
+
+        # Identify runs to delete (keep only first/latest per day)
+        ids_to_delete = []
+        cutoff_date = (datetime.now() - timedelta(days=keep_days)).strftime("%Y-%m-%d")
+
+        for date, run_ids in runs_by_date.items():
+            # Delete runs older than keep_days
+            if date < cutoff_date:
+                ids_to_delete.extend(run_ids)
+            # Keep only the first (latest) run per day
+            elif len(run_ids) > 1:
+                ids_to_delete.extend(run_ids[1:])  # Keep first, delete rest
+
+        if not ids_to_delete:
+            logger.info("No duplicate runs to clean up")
+            return 0
+
+        # Delete in batches
+        deleted = 0
+        batch_size = 50
+        for i in range(0, len(ids_to_delete), batch_size):
+            batch = ids_to_delete[i:i + batch_size]
+            delete_response = (
+                self.client.table("screener_runs")
+                .delete()
+                .in_("id", batch)
+                .execute()
+            )
+            deleted += len(delete_response.data) if delete_response.data else 0
+
+        logger.info(f"Cleaned up {deleted} duplicate runs, keeping 1 per day")
+        return deleted
+
     def save_stock_analysis(
         self,
         run_id: str,

@@ -38,6 +38,24 @@ def format_percent(value: float) -> str:
     return f"{value*100:.1f}%" if abs(value) < 1 else f"{value:.1f}%"
 
 
+def get_sector_spanish(sector: str) -> str:
+    """Traduce sector a español."""
+    translations = {
+        "Technology": "Tecnologia",
+        "Basic Materials": "Materiales Basicos",
+        "Financial Services": "Servicios Financieros",
+        "Healthcare": "Salud",
+        "Consumer Cyclical": "Consumo Ciclico",
+        "Consumer Defensive": "Consumo Defensivo",
+        "Energy": "Energia",
+        "Industrials": "Industriales",
+        "Utilities": "Servicios Publicos",
+        "Real Estate": "Bienes Raices",
+        "Communication Services": "Comunicaciones",
+    }
+    return translations.get(sector, sector)
+
+
 class TradeIdeaGenerator:
     """Genera Trade Ideas completas."""
 
@@ -63,26 +81,26 @@ class TradeIdeaGenerator:
 
         # Determinar recomendación basada en score
         if ai_score.total_score >= 7.5:
-            recommendation = "STRONG BUY"
-            rec_color = "🟢"
+            recommendation = "COMPRA FUERTE"
+            rec_en = "STRONG BUY"
         elif ai_score.total_score >= 6.5:
-            recommendation = "BUY"
-            rec_color = "🟢"
+            recommendation = "COMPRA"
+            rec_en = "BUY"
         elif ai_score.total_score >= 5.5:
-            recommendation = "HOLD"
-            rec_color = "🟡"
+            recommendation = "MANTENER"
+            rec_en = "HOLD"
         else:
-            recommendation = "WATCH"
-            rec_color = "🟠"
+            recommendation = "OBSERVAR"
+            rec_en = "WATCH"
 
         # Generar markdown
         markdown = self._generate_markdown(
-            stock, analysis, ai_score, recommendation, rec_color, now
+            stock, analysis, ai_score, recommendation, now
         )
 
         # Generar texto plano
         plain_text = self._generate_plain_text(
-            stock, analysis, ai_score, recommendation, now
+            stock, analysis, ai_score, rec_en, now
         )
 
         return TradeIdea(
@@ -98,187 +116,146 @@ class TradeIdeaGenerator:
         analysis: StockAnalysis,
         ai_score: AIScoreBreakdown,
         recommendation: str,
-        rec_color: str,
         now: datetime,
     ) -> str:
-        """Genera Trade Idea en formato Markdown."""
+        """Genera Trade Idea en formato Markdown profesional."""
         m = stock.metrics
+        sector_es = get_sector_spanish(stock.sector) if stock.sector else "N/A"
 
-        # Header
-        md = f"""# {rec_color} Trade Idea: {stock.symbol}
+        # Determinar market cap category
+        if stock.market_cap and stock.market_cap >= 200e9:
+            cap_cat = "Mega cap"
+        elif stock.market_cap and stock.market_cap >= 10e9:
+            cap_cat = "Large cap"
+        elif stock.market_cap and stock.market_cap >= 2e9:
+            cap_cat = "Mid cap"
+        else:
+            cap_cat = "Small cap"
 
-**{stock.name}**
-Sector: {stock.sector} | Industry: {analysis.industry}
-Fecha: {now.strftime('%d/%m/%Y %H:%M')}
-
----
-
-## 📊 Resumen Ejecutivo
-
-| Métrica | Valor |
-|---------|-------|
-| **Recomendación** | **{recommendation}** |
-| **Score IA** | **{ai_score.total_score}/10** |
-| **Precio Actual** | ${stock.price:.2f} |
-| **Market Cap** | {format_currency(stock.market_cap)} |
-
----
-
-## 🎯 Por Qué Comprar {stock.symbol}
-
-"""
-        # Razones basadas en scores
+        # Build thesis reasons based on scores
         reasons = []
 
-        if ai_score.fundamental_score >= 8:
-            reasons.append(f"✅ **Fundamentos sólidos** (Score: {ai_score.fundamental_score}/10) - ROE del {format_percent(m.roe)}, márgenes saludables")
+        # Reason 1: Best strength
+        if ai_score.fundamental_score >= 8 and m.roe:
+            roe_pct = m.roe * 100 if m.roe < 1 else m.roe
+            margin_pct = m.net_margin * 100 if m.net_margin and m.net_margin < 1 else (m.net_margin or 0)
+            reasons.append(f"**Rentabilidad excepcional** - ROE del {roe_pct:.1f}% y margen neto del {margin_pct:.1f}%, muy por encima del promedio del sector.")
+        elif ai_score.valuation_score >= 7:
+            pe_str = f"P/E de {m.pe_ratio:.1f}x" if m.pe_ratio else "valuacion atractiva"
+            reasons.append(f"**Valuacion atractiva** - {pe_str}, cotiza por debajo de su valor intrinseco segun metricas GARP.")
+        elif ai_score.growth_score >= 7:
+            growth_str = f"crecimiento de EPS del {format_percent(m.eps_growth_5y)}" if m.eps_growth_5y else "solido crecimiento proyectado"
+            reasons.append(f"**Crecimiento sostenido** - {growth_str} en los ultimos 5 anos con perspectivas positivas.")
 
-        if ai_score.valuation_score >= 7:
-            peg_str = f"PEG de {analysis.peg_finviz:.2f}" if analysis.peg_finviz else "valuación atractiva"
-            reasons.append(f"✅ **Valuación atractiva** (Score: {ai_score.valuation_score}/10) - {peg_str}, {ai_score.valuation_vs_sector}")
+        # Reason 2: Second strength
+        if ai_score.quality_score >= 7 and analysis.free_cash_flow:
+            fcf_str = format_currency(analysis.free_cash_flow)
+            reasons.append(f"**Generacion de caja solida** - Free Cash Flow de {fcf_str}, permitiendo reinversion y retorno a accionistas.")
+        elif ai_score.momentum_score >= 7:
+            reasons.append(f"**Momentum tecnico positivo** - {ai_score.momentum_trend}, indicando interes comprador sostenido.")
+        elif m.current_ratio and m.current_ratio > 1.5:
+            reasons.append(f"**Liquidez robusta** - Current Ratio de {m.current_ratio:.2f}, sin presion financiera a corto plazo.")
 
-        if ai_score.growth_score >= 7:
-            reasons.append(f"✅ **Crecimiento proyectado** (Score: {ai_score.growth_score}/10) - Outlook: {ai_score.growth_outlook}")
-
-        if ai_score.momentum_score >= 7:
-            reasons.append(f"✅ **Momentum técnico positivo** (Score: {ai_score.momentum_score}/10) - {ai_score.momentum_trend}")
-
-        if ai_score.sentiment_score >= 7:
-            reasons.append(f"✅ **Sentimiento positivo** (Score: {ai_score.sentiment_score}/10) - {ai_score.sentiment_summary}")
-
-        if ai_score.quality_score >= 8:
-            fcf_str = format_currency(analysis.free_cash_flow) if analysis.free_cash_flow else "sólido"
-            reasons.append(f"✅ **Calidad del negocio** (Score: {ai_score.quality_score}/10) - FCF: {fcf_str}")
-
-        if not reasons:
-            reasons.append(f"✅ Pasa todos los filtros GARP con Score: {ai_score.total_score}/10")
-
-        md += "\n".join(reasons)
-
-        # Métricas clave
-        md += f"""
-
----
-
-## 📈 Métricas Fundamentales
-
-### Valuación
-| Métrica | Valor | Interpretación |
-|---------|-------|----------------|
-| P/E Ratio | {f"{m.pe_ratio:.1f}" if m.pe_ratio else "N/A"} | {"Atractivo" if m.pe_ratio and m.pe_ratio < 20 else "Elevado" if m.pe_ratio and m.pe_ratio > 30 else "Razonable"} |
-| PEG (Finviz) | {f"{analysis.peg_finviz:.2f}" if analysis.peg_finviz else "N/A"} | {"Muy atractivo" if analysis.peg_finviz and analysis.peg_finviz < 1 else "Razonable"} |
-| Forward P/E | {f"{analysis.fwd_pe:.1f}" if analysis.fwd_pe else "N/A"} | - |
-| P/B | {f"{m.pb_ratio:.2f}" if m.pb_ratio else "N/A"} | - |
-
-### Rentabilidad
-| Métrica | Valor |
-|---------|-------|
-| ROE | {format_percent(m.roe)} |
-| ROA | {format_percent(m.roa)} |
-| Margen Neto | {format_percent(m.net_margin)} |
-| Margen Bruto | {format_percent(m.gross_margin)} |
-
-### Crecimiento
-| Métrica | Valor |
-|---------|-------|
-| EPS Growth (5Y) | {format_percent(m.eps_growth_5y)} |
-| EPS Este Año | {format_percent(analysis.eps_this_year)} |
-| EPS Próximo Año | {format_percent(analysis.eps_next_year)} |
-
-### Salud Financiera
-| Métrica | Valor | Status |
-|---------|-------|--------|
-| Current Ratio | {f"{m.current_ratio:.2f}" if m.current_ratio else "N/A"} | {"Solido" if m.current_ratio and m.current_ratio > 1.5 else "Ajustado"} |
-| Quick Ratio | {f"{m.quick_ratio:.2f}" if m.quick_ratio else "N/A"} | {"Solido" if m.quick_ratio and m.quick_ratio > 1 else "Ajustado"} |
-| D/E Ratio | {f"{m.debt_to_equity:.2f}" if m.debt_to_equity else "N/A"} | {"Bajo" if m.debt_to_equity and m.debt_to_equity < 0.5 else "Moderado"} |
-
----
-
-## 💰 Balance Highlights
-
-| Concepto | Valor |
-|----------|-------|
-| Revenue (TTM) | {format_currency(analysis.revenue_ttm)} |
-| Net Income (TTM) | {format_currency(analysis.net_income_ttm)} |
-| Free Cash Flow | {format_currency(analysis.free_cash_flow)} |
-| Cash Total | {format_currency(analysis.total_cash)} |
-| Deuda Total | {format_currency(analysis.total_debt)} |
-
-"""
-        # Posición neta de caja
-        if analysis.total_cash and analysis.total_debt:
-            net_cash = analysis.total_cash - analysis.total_debt
-            if net_cash > 0:
-                md += f"\n**Posición neta de caja:** {format_currency(net_cash)} ✅\n"
-            else:
-                md += f"\n**Deuda neta:** {format_currency(abs(net_cash))}\n"
-
-        # Earnings
-        if analysis.earnings and analysis.earnings.next_earnings_date:
-            md += f"""
----
-
-## 📅 Próximo Earnings
-
-**Fecha:** {analysis.earnings.next_earnings_date}
-"""
-            if analysis.earnings.eps_estimate:
-                md += f"**EPS Estimado:** ${analysis.earnings.eps_estimate:.2f}\n"
-
-        # Score breakdown
-        md += f"""
----
-
-## 🤖 Score IA - Breakdown
-
-| Componente | Score | Peso | Detalle |
-|------------|-------|------|---------|
-| Fundamental | {ai_score.fundamental_score:.1f}/10 | 20% | ROE, márgenes, ratios |
-| Valuación | {ai_score.valuation_score:.1f}/10 | 25% | {ai_score.valuation_vs_sector} |
-| Crecimiento | {ai_score.growth_score:.1f}/10 | 20% | {ai_score.growth_outlook} |
-| Momentum | {ai_score.momentum_score:.1f}/10 | 15% | {ai_score.momentum_trend} |
-| Sentimiento | {ai_score.sentiment_score:.1f}/10 | 10% | {ai_score.sentiment_summary} |
-| Calidad | {ai_score.quality_score:.1f}/10 | 10% | FCF, eficiencia |
-| **TOTAL** | **{ai_score.total_score}/10** | 100% | |
-
-"""
-        # Flags
-        if ai_score.flags:
-            md += "---\n\n## 🚩 Señales\n\n"
-            for flag in ai_score.flags:
-                if "OPPORTUNITY" in flag:
-                    md += f"🟢 {flag}\n"
-                elif "RISK" in flag:
-                    md += f"🔴 {flag}\n"
+        # Reason 3: Balance strength
+        if m.debt_to_equity and m.debt_to_equity < 0.5:
+            if analysis.total_cash and analysis.total_debt:
+                net = analysis.total_cash - analysis.total_debt
+                if net > 0:
+                    reasons.append(f"**Balance fortaleza** - Posicion neta de caja de {format_currency(net)}, sin presion de deuda. Ratio D/E de apenas {m.debt_to_equity:.2f}.")
                 else:
-                    md += f"🟡 {flag}\n"
+                    reasons.append(f"**Deuda controlada** - Ratio D/E de {m.debt_to_equity:.2f}, conservador para el sector.")
+            else:
+                reasons.append(f"**Estructura de capital conservadora** - Ratio D/E de {m.debt_to_equity:.2f}, bajo riesgo financiero.")
 
-        # Noticias
-        if analysis.news:
-            md += "\n---\n\n## 📰 Noticias Recientes\n\n"
-            for news in analysis.news[:5]:
-                date_str = f"[{news.date}] " if news.date else ""
-                md += f"- {date_str}{news.title}\n"
+        # Ensure at least 2 reasons
+        if len(reasons) < 2:
+            if ai_score.sentiment_score >= 6:
+                reasons.append(f"**Sentimiento favorable** - {ai_score.sentiment_summary}")
+            else:
+                reasons.append("**Pasa filtros GARP** - Cumple criterios de Growth at Reasonable Price.")
 
-        # Activos relacionados
-        if analysis.related_assets:
-            md += "\n---\n\n## 🔗 Activos Relacionados\n\n"
-            md += "| Activo | Precio | Cambio | Tipo |\n"
-            md += "|--------|--------|--------|------|\n"
-            for asset in analysis.related_assets[:5]:
-                change_emoji = "🟢" if asset.change_percent >= 0 else "🔴"
-                md += f"| {asset.name} | ${asset.price:.2f} | {change_emoji} {asset.change_percent:+.2f}% | {asset.relevance} |\n"
+        # Build risks
+        risks = []
+        if ai_score.valuation_score < 6 and m.pe_ratio and m.pe_ratio > 25:
+            risks.append(f"**Valuacion elevada** - P/E de {m.pe_ratio:.1f}x por encima del promedio historico. Requiere que se cumplan expectativas de crecimiento.")
+        if m.debt_to_equity and m.debt_to_equity > 0.8:
+            risks.append(f"**Apalancamiento** - D/E de {m.debt_to_equity:.2f} implica sensibilidad a tasas de interes.")
+        if ai_score.momentum_score < 5:
+            risks.append(f"**Momentum debil** - {ai_score.momentum_trend}. Podria haber presion vendedora en el corto plazo.")
+        if not risks:
+            risks.append("**Riesgo de mercado** - Como toda inversion en renta variable, esta sujeta a volatilidad del mercado.")
 
-        # Disclaimer
-        md += """
+        # Header
+        md = f"""# Trade Idea: {stock.symbol} ({stock.name})
+
+**Fecha:** {now.strftime('%d de %B de %Y').replace('January', 'enero').replace('February', 'febrero').replace('March', 'marzo').replace('April', 'abril').replace('May', 'mayo').replace('June', 'junio').replace('July', 'julio').replace('August', 'agosto').replace('September', 'septiembre').replace('October', 'octubre').replace('November', 'noviembre').replace('December', 'diciembre')}
+**Recomendacion:** {recommendation}
+**Sector:** {sector_es} - {analysis.industry or 'N/A'}
+
 ---
 
-## ⚠️ Disclaimer
+## Tesis de Inversion
 
-Esta idea de trading es generada automáticamente basada en análisis cuantitativo y cualitativo.
-**No constituye asesoramiento financiero.** Realice su propia investigación antes de invertir.
+{stock.name} representa una oportunidad atractiva en el sector de {sector_es.lower()}, combinando fundamentos solidos con una valuacion razonable segun la estrategia GARP (Growth at Reasonable Price).
 
-*Generado por Stock Screener GARP - Score IA*
+**Razones para comprar:**
+
+"""
+        for i, reason in enumerate(reasons[:3], 1):
+            md += f"{i}. {reason}\n\n"
+
+        # Metrics table
+        md += f"""---
+
+## Metricas Clave
+
+| | Valor | Contexto |
+|---|---:|---|
+| Precio actual | ${stock.price:.2f} | - |
+| Market Cap | {format_currency(stock.market_cap)} | {cap_cat} |
+| P/E | {f"{m.pe_ratio:.1f}x" if m.pe_ratio else "N/A"} | {"Prima por crecimiento" if m.pe_ratio and m.pe_ratio > 20 else "Atractivo" if m.pe_ratio else "-"} |
+| ROE | {format_percent(m.roe)} | {"Excelente" if m.roe and (m.roe > 0.15 or m.roe > 15) else "Bueno" if m.roe else "-"} |
+| Margen neto | {format_percent(m.net_margin)} | {"Solido" if m.net_margin and (m.net_margin > 0.1 or m.net_margin > 10) else "-"} |
+| Crecimiento EPS 5Y | {format_percent(m.eps_growth_5y)} | {"Fuerte" if m.eps_growth_5y and (m.eps_growth_5y > 0.1 or m.eps_growth_5y > 10) else "-"} |
+| Current Ratio | {f"{m.current_ratio:.2f}" if m.current_ratio else "N/A"} | {"Liquidez solida" if m.current_ratio and m.current_ratio > 1.5 else "-"} |
+| Deuda/Equity | {f"{m.debt_to_equity:.2f}" if m.debt_to_equity else "N/A"} | {"Conservador" if m.debt_to_equity and m.debt_to_equity < 0.5 else "Moderado" if m.debt_to_equity else "-"} |
+
+"""
+
+        # Catalysts if news available
+        if analysis.news and len(analysis.news) > 0:
+            md += """---
+
+## Catalizadores
+
+"""
+            for news in analysis.news[:3]:
+                md += f"- **{news.source}:** {news.title}\n"
+            md += "\n"
+
+        # Risks
+        md += """---
+
+## Riesgos a Monitorear
+
+"""
+        for risk in risks[:3]:
+            md += f"- {risk}\n"
+
+        # Conclusion
+        md += f"""
+---
+
+## Conclusion
+
+{stock.symbol} ofrece una combinacion atractiva de {"crecimiento y valor" if ai_score.growth_score >= 6 and ai_score.valuation_score >= 6 else "fundamentos solidos"} que la posiciona favorablemente para inversores con horizonte de mediano plazo. {"La solidez del balance proporciona margen de seguridad." if m.debt_to_equity and m.debt_to_equity < 0.5 else ""}
+
+**Score:** {ai_score.total_score:.1f}/10
+**Horizonte sugerido:** 12-24 meses
+
+---
+
+*Este documento es informativo y no constituye recomendacion de compra o venta. Consulte a su asesor financiero antes de invertir.*
 """
         return md
 
