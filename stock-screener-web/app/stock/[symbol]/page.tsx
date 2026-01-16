@@ -133,25 +133,25 @@ export default function StockPage({ params }: StockPageProps) {
       />
 
       {/* TradingView Chart Section */}
-      <div className="space-y-6">
-        {/* Price Chart - Full Width */}
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold mb-4">Price Chart</h3>
+      <div className="grid gap-4 lg:grid-cols-4">
+        {/* Price Chart - Large, 3/4 width */}
+        <div className="lg:col-span-3 rounded-lg border bg-card p-4">
+          <h3 className="font-semibold mb-2">Price Chart</h3>
           <TradingViewChart
             symbol={stock.symbol}
             exchange={stock.exchange || "NASDAQ"}
-            height={600}
+            height={750}
             showIndicators={true}
           />
         </div>
 
-        {/* Technical Analysis - Below Chart */}
-        <div className="rounded-lg border bg-card p-4">
-          <h3 className="font-semibold mb-4">Technical Analysis</h3>
+        {/* Technical Analysis - Compact, 1/4 width, to the right */}
+        <div className="lg:col-span-1 rounded-lg border bg-card p-4">
+          <h3 className="font-semibold mb-2">Technical Analysis</h3>
           <TechnicalAnalysisWidget
             symbol={stock.symbol}
             exchange={stock.exchange || "NASDAQ"}
-            height={400}
+            height={300}
           />
         </div>
       </div>
