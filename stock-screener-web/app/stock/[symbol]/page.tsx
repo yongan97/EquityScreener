@@ -55,8 +55,8 @@ export default function StockPage({ params }: StockPageProps) {
 
   if (!stock) {
     return (
-      <div className="space-y-4">
-        <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+      <div className="container mx-auto px-4 py-6 space-y-4">
+        <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
           &larr; Back to Dashboard
         </Link>
         <div className="p-8 text-center text-muted-foreground">
@@ -77,9 +77,9 @@ export default function StockPage({ params }: StockPageProps) {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Breadcrumb */}
-      <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+      <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
         &larr; Back to Dashboard
       </Link>
 

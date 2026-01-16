@@ -34,7 +34,7 @@ export default function HistoryPage() {
 
   if (runsLoading) {
     return (
-      <div className="space-y-6">
+      <div className="container mx-auto px-4 py-6 space-y-6">
         <div>
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-72 mt-2" />
@@ -63,7 +63,7 @@ export default function HistoryPage() {
   const selectedRun = runs.find((r) => r.id === selectedRunId);
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <History className="h-6 w-6" />

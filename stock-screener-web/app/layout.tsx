@@ -8,8 +8,14 @@ import { Header } from "@/components/Header";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Stock Screener GARP",
-  description: "Growth at Reasonable Price stock screener with daily updates",
+  title: "Stock Screener GARP - AI-Powered Stock Screening",
+  description: "Find the best growth stocks at reasonable prices with AI-powered daily screening. GARP strategy with complete trade ideas and analysis.",
+  keywords: ["stock screener", "GARP", "growth investing", "AI stock analysis", "trade ideas"],
+  openGraph: {
+    title: "Stock Screener GARP - AI-Powered Stock Screening",
+    description: "Find the best growth stocks at reasonable prices with AI-powered daily screening.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -23,12 +29,7 @@ export default function RootLayout({
         <Providers>
           <div className="min-h-screen bg-background flex flex-col">
             <Header />
-            <main className="container mx-auto px-4 py-6 flex-1">{children}</main>
-            <footer className="border-t">
-              <div className="container mx-auto px-4 py-4 text-center text-sm text-muted-foreground">
-                Data updated daily at 6:00 AM EST
-              </div>
-            </footer>
+            <main className="flex-1">{children}</main>
           </div>
           <Toaster />
         </Providers>

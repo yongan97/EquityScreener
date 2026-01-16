@@ -49,7 +49,21 @@ export function AuthModal({
         setSuccess("Check your email to confirm your account!");
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Auth error:", err);
+      if (err instanceof Error) {
+        // Provide user-friendly error messages
+        if (err.message.includes("User already registered")) {
+          setError("This email is already registered. Try signing in instead.");
+        } else if (err.message.includes("Invalid login credentials")) {
+          setError("Invalid email or password.");
+        } else if (err.message.includes("Email not confirmed")) {
+          setError("Please check your email and confirm your account first.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
