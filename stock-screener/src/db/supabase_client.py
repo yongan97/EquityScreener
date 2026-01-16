@@ -8,6 +8,7 @@ from supabase import create_client, Client
 from src.models.stock import ScreenerResult, Stock
 from src.analysis.ai_scoring import AIScoreBreakdown
 from src.analysis.analyzer import StockAnalysis
+from src.analysis.price_performance import PricePerformance
 
 
 class SupabaseClient:
@@ -317,6 +318,7 @@ class SupabaseClient:
         analysis: StockAnalysis,
         ai_score: AIScoreBreakdown,
         trade_idea_md: str,
+        price_perf: Optional[PricePerformance] = None,
     ) -> None:
         """Save complete stock analysis with AI score and trade idea.
 
@@ -326,6 +328,7 @@ class SupabaseClient:
             analysis: Complete analysis.
             ai_score: AI score breakdown.
             trade_idea_md: Trade idea in markdown format.
+            price_perf: Price performance data (1D, 1W, 1M, YTD, 52W).
         """
         data = {
             "run_id": run_id,
@@ -383,6 +386,12 @@ class SupabaseClient:
             "next_earnings_date": str(analysis.earnings.next_earnings_date) if analysis.earnings and analysis.earnings.next_earnings_date else None,
             # Trade idea
             "trade_idea": trade_idea_md,
+            # Price performance
+            "perf_1d": price_perf.perf_1d if price_perf else None,
+            "perf_1w": price_perf.perf_1w if price_perf else None,
+            "perf_1m": price_perf.perf_1m if price_perf else None,
+            "perf_ytd": price_perf.perf_ytd if price_perf else None,
+            "perf_52w": price_perf.perf_52w if price_perf else None,
         }
 
         # Insert stock analysis
@@ -392,13 +401,13 @@ class SupabaseClient:
     def save_run_with_analysis(
         self,
         result: ScreenerResult,
-        analyses: dict[str, tuple[StockAnalysis, AIScoreBreakdown, str]],
+        analyses: dict[str, tuple[StockAnalysis, AIScoreBreakdown, str, Optional[PricePerformance]]],
     ) -> str:
         """Save screener run with complete analysis for each stock.
 
         Args:
             result: ScreenerResult with run metadata.
-            analyses: Dict mapping symbol to (analysis, ai_score, trade_idea_md).
+            analyses: Dict mapping symbol to (analysis, ai_score, trade_idea_md, price_perf).
 
         Returns:
             Run ID.
@@ -421,8 +430,8 @@ class SupabaseClient:
         # 2. Save stocks with analysis
         for stock in result.stocks:
             if stock.symbol in analyses:
-                analysis, ai_score, trade_idea = analyses[stock.symbol]
-                self.save_stock_analysis(run_id, stock, analysis, ai_score, trade_idea)
+                analysis, ai_score, trade_idea, price_perf = analyses[stock.symbol]
+                self.save_stock_analysis(run_id, stock, analysis, ai_score, trade_idea, price_perf)
             else:
                 # Fallback: save basic data
                 self.client.table("stocks").insert(

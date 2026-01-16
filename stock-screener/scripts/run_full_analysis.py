@@ -16,6 +16,7 @@ from src.core import StockScreener
 from src.analysis.analyzer import StockAnalyzer
 from src.analysis.ai_scoring import AIScorer
 from src.analysis.trade_idea import TradeIdeaGenerator
+from src.analysis.price_performance import get_price_performance
 from src.db import SupabaseClient
 
 load_dotenv()
@@ -72,7 +73,7 @@ def run(
         scorer = AIScorer()
         idea_gen = TradeIdeaGenerator()
 
-        analyses = {}  # symbol -> (analysis, ai_score, trade_idea_md)
+        analyses = {}  # symbol -> (analysis, ai_score, trade_idea_md, price_perf)
 
         with Progress(
             SpinnerColumn(),
@@ -94,7 +95,10 @@ def run(
                     # Trade Idea
                     trade_idea = idea_gen.generate(stock, analysis, ai_score)
 
-                    analyses[stock.symbol] = (analysis, ai_score, trade_idea.markdown)
+                    # Price Performance (1D, 1W, 1M, YTD, 52W)
+                    price_perf = get_price_performance(stock.symbol)
+
+                    analyses[stock.symbol] = (analysis, ai_score, trade_idea.markdown, price_perf)
 
                     progress.advance(task)
 
