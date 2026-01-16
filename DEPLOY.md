@@ -289,3 +289,6 @@ For issues, check:
 - GitHub Actions logs for backend errors
 - Browser DevTools console for frontend errors
 - Supabase logs for database errors
+
+
+---
