@@ -1,0 +1,114 @@
+{
+  "name": "GARP Strict",
+  "description": "Growth At Reasonable Price - Filtros estrictos originales",
+  "version": "2.0.0",
+
+  "data_source": "finviz",
+
+  "operability": {
+    "market_cap_min": 2000000000,
+    "avg_volume_min": 300000,
+    "price_min": 5,
+    "exchange": ["NYSE", "NASDAQ"],
+    "exclude_sectors": [],
+    "exclude_industries": []
+  },
+
+  "valuation": {
+    "pe_ratio": {
+      "min": 0,
+      "max": 50,
+      "required": true,
+      "description": "P/E positivo (empresa rentable)"
+    },
+    "peg_ratio": {
+      "min": null,
+      "max": 1.5,
+      "required": false,
+      "description": "PEG < 1.5 - Finviz ya pre-filtra por PEG bajo, Yahoo puede diferir"
+    }
+  },
+
+  "growth": {
+    "eps_growth_5y": {
+      "min": 0,
+      "max": null,
+      "required": true,
+      "description": "Crecimiento EPS positivo obligatorio"
+    },
+    "revenue_growth_5y": {
+      "min": null,
+      "max": null,
+      "required": false,
+      "description": "Opcional - crecimiento de ingresos"
+    }
+  },
+
+  "profitability": {
+    "roe": {
+      "min": 0.15,
+      "max": null,
+      "required": true,
+      "description": "ROE > 15% (rentabilidad sólida)"
+    },
+    "roa": {
+      "min": null,
+      "max": null,
+      "required": false,
+      "description": "Opcional"
+    },
+    "gross_margin": {
+      "min": null,
+      "max": null,
+      "required": false,
+      "description": "Opcional"
+    }
+  },
+
+  "liquidity": {
+    "current_ratio": {
+      "min": 1.5,
+      "max": null,
+      "required": true,
+      "description": "Current Ratio > 1.5"
+    },
+    "quick_ratio": {
+      "min": 1.0,
+      "max": null,
+      "required": true,
+      "description": "Quick Ratio > 1"
+    }
+  },
+
+  "solvency": {
+    "debt_to_equity": {
+      "min": null,
+      "max": 0.5,
+      "required": true,
+      "description": "D/E < 0.5 (bajo apalancamiento)"
+    },
+    "interest_coverage": {
+      "min": null,
+      "max": null,
+      "required": false,
+      "description": "Opcional"
+    }
+  },
+  
+  "scoring": {
+    "enabled": true,
+    "weights": {
+      "valuation": 0.25,
+      "growth": 0.25,
+      "profitability": 0.25,
+      "financial_health": 0.25
+    }
+  },
+  
+  "output": {
+    "max_results": 100,
+    "sort_by": "score",
+    "sort_order": "desc",
+    "include_metrics": true
+  }
+}

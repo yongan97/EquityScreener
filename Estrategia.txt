@@ -1,0 +1,48 @@
+Universe:
+
+Stocks only (ex-Funds)
+
+Valuación y crecimiento:
+
+P/E: Profitable (P/E > 0)
+Explicación: exige que la empresa tenga ganancias positivas, evitando compañías que todavía pierden dinero y reduciendo el universo a negocios ya rentables.
+Por qué se usa: ayuda a filtrar “story stocks” sin earnings, concentrándose en empresas con flujo de caja y resultados reales.
+
+PEG: Under 1
+Explicación: PEG = P/E dividido por el crecimiento esperado de las ganancias; menor a 1 implica que el crecimiento proyectado “compensa” o excede el múltiplo de P/E.
+Por qué se usa: apunta a empresas de crecimiento a precio razonable, evitando pagar múltiplos muy altos para el crecimiento que se espera.
+
+EPS growth next 5 years: Positive (>0%)
+Explicación: crecimiento estimado de ganancias en el largo plazo (aprox. 5 años) mayor a cero.
+Por qué se usa: se descartan negocios donde el consenso ve estancamiento o caída estructural de earnings, priorizando compañías con tendencia de crecimiento.
+
+Rentabilidad:
+
+ROE: Over 15%
+Explicación: retorno sobre el patrimonio neto; mide la eficiencia con la que la empresa convierte el equity en ganancias.
+Por qué se usa: un ROE > 15% suele asociarse a buenos negocios (márgenes atractivos, ventajas competitivas, uso eficiente del capital); es un filtro de calidad.
+
+Solvencia y liquidez:
+
+Current Ratio: Over 1.5
+Explicación: activo corriente dividido por pasivo corriente; indica la capacidad de cubrir obligaciones de corto plazo.
+Por qué se usa: un valor superior a 1.5 brinda margen de seguridad de liquidez y reduce riesgo de tensión de caja en el corto plazo.
+
+Quick Ratio: Over 1
+Explicación: (activo corriente sin inventarios) dividido por pasivo corriente; versión más estricta del current ratio.
+Por qué se usa: garantiza que incluso sin contar inventarios, la empresa puede cubrir sus deudas de corto plazo, lo que da una visión más conservadora de la liquidez.
+
+Debt/Equity (Total D/E): Under 0.5
+Explicación: relación entre deuda total y patrimonio neto; mide el nivel de apalancamiento financiero.
+Por qué se usa: limita la exposición al riesgo financiero; un D/E < 0.5 evita negocios excesivamente endeudados, más vulnerables a subas de tasas y shocks macro.
+
+Perfil que construye este screen:
+
+Empresas rentables, con P/E positivo.
+
+Con crecimiento esperado de ganancias a futuro y valoración razonable (PEG < 1).
+
+Con alta rentabilidad sobre el equity (ROE > 15%).
+
+Con balances sólidos: buena liquidez (current ratio > 1.5, quick ratio > 1) y bajo apalancamiento (D/E < 0.5).
+En conjunto, el filtro apunta a empresas de calidad, con crecimiento razonable y balances sanos, evitando compañías muy apalancadas, sin ganancias o excesivamente caras.

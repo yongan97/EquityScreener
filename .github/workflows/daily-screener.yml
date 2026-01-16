@@ -1,0 +1,81 @@
+name: Daily Stock Screener
+
+on:
+  schedule:
+    # 6:00 AM EST = 11:00 UTC (Mon-Fri only)
+    # During DST (Mar-Nov): 6:00 AM EDT = 10:00 UTC
+    - cron: '0 11 * * 1-5'
+  workflow_dispatch:  # Permite trigger manual desde GitHub UI
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  run-screener:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: stock-screener/requirements.txt
+
+      - name: Install dependencies
+        working-directory: stock-screener
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Test Supabase connection
+        working-directory: stock-screener
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/run_screener_web.py test-connection
+
+      - name: Run stock screener with AI analysis
+        working-directory: stock-screener
+        env:
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/run_full_analysis.py run --cleanup --verbose
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Stock screener failed! Check the logs above."
+          # Aquí podrías agregar notificaciones (Slack, email, etc.)
+
+  # Job opcional para limpieza manual
+  cleanup:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: stock-screener
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Cleanup old runs
+        working-directory: stock-screener
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/run_screener_web.py cleanup --keep-runs 30

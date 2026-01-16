@@ -1,0 +1,35 @@
+{
+  "name": "GARP Aggressive",
+  "description": "Mayor tolerancia a valuación, prioriza crecimiento",
+  "version": "1.0.0",
+  "extends": "default",
+  
+  "operability": {
+    "market_cap_min": 1000000000,
+    "avg_volume_min": 200000,
+    "price_min": 5
+  },
+  
+  "valuation": {
+    "pe_ratio": {"min": 0, "max": 50},
+    "peg_ratio": {"min": null, "max": 1.5}
+  },
+  
+  "growth": {
+    "eps_growth_5y": {"min": 10, "max": null},
+    "revenue_growth_5y": {"min": 5, "max": null}
+  },
+  
+  "profitability": {
+    "roe": {"min": 12, "max": null}
+  },
+  
+  "liquidity": {
+    "current_ratio": {"min": 1.2, "max": null},
+    "quick_ratio": {"min": 0.8, "max": null}
+  },
+  
+  "solvency": {
+    "debt_to_equity": {"min": null, "max": 0.8}
+  }
+}

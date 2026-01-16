@@ -1,0 +1,49 @@
+# Core
+requests>=2.31.0
+httpx>=0.25.0
+aiohttp>=3.9.0
+
+# Data
+pandas>=2.1.0
+numpy>=1.24.0
+
+# APIs
+yfinance>=0.2.31
+financetoolkit>=1.4.0
+
+# Scraping (Finviz backup)
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Database
+sqlalchemy>=2.0.0
+supabase>=2.0.0
+
+# Export
+openpyxl>=3.1.0
+xlsxwriter>=3.1.0
+
+# Config & Environment
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Logging
+loguru>=0.7.0
+
+# CLI
+typer>=0.9.0
+rich>=13.7.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# Code Quality
+ruff>=0.1.0
+mypy>=1.7.0
+
+# Types
+pandas-stubs>=2.1.0
+types-requests>=2.31.0
