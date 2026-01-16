@@ -49,9 +49,19 @@ jobs:
 
       - name: Notify on failure
         if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
           echo "::error::Stock screener failed! Check the logs above."
-          # Aquí podrías agregar notificaciones (Slack, email, etc.)
+          curl -X POST 'https://api.resend.com/emails' \
+            -H "Authorization: Bearer $RESEND_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "from": "Stock Screener <onboarding@resend.dev>",
+              "to": ["juangandolfog@gmail.com"],
+              "subject": "⚠️ Stock Screener FALLO - '${{ github.run_id }}'",
+              "html": "<h2>El Stock Screener falló</h2><p><strong>Fecha:</strong> '"$(date)"'</p><p><strong>Run ID:</strong> ${{ github.run_id }}</p><p><strong>Ver logs:</strong> <a href=\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\">Click aquí</a></p>"
+            }'
 
   # Job opcional para limpieza manual
   cleanup:

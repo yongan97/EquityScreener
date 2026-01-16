@@ -35,7 +35,10 @@
       "WebFetch(domain:www.tradingview.com)",
       "WebFetch(domain:finviz.com)",
       "WebFetch(domain:www.npmjs.com)",
-      "WebFetch(domain:tradingview-widgets.jorrinkievit.xyz)"
+      "WebFetch(domain:tradingview-widgets.jorrinkievit.xyz)",
+      "Bash(npx tsc:*)",
+      "Bash(git diff:*)",
+      "Bash(npx shadcn@latest init --yes --defaults)"
     ]
   }
 }
