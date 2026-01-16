@@ -11,9 +11,16 @@ import { TradeIdeaModal } from "@/components/TradeIdeaModal";
 interface StockTableProps {
   stocks: Stock[];
   isLoading?: boolean;
+  isPremium?: boolean;
+  onUpgradeClick?: () => void;
 }
 
-export function StockTable({ stocks, isLoading }: StockTableProps) {
+export function StockTable({
+  stocks,
+  isLoading,
+  isPremium = false,
+  onUpgradeClick,
+}: StockTableProps) {
   const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -60,6 +67,8 @@ export function StockTable({ stocks, isLoading }: StockTableProps) {
           stock={selectedStock}
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+          isPremium={isPremium}
+          onUpgradeClick={onUpgradeClick}
         />
       )}
     </>
